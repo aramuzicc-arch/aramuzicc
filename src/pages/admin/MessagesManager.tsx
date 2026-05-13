@@ -8,6 +8,7 @@ type Message = {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   subject: string;
   message: string;
   read: boolean;
@@ -15,7 +16,7 @@ type Message = {
 };
 
 type ApiMessage = Omit<Message, 'id'> & { _id: string };
-const normalize = (item: ApiMessage): Message => ({ ...item, id: item._id });
+const normalize = (item: ApiMessage): Message => ({ ...item, id: item._id, phone: item.phone || '' });
 
 export default function MessagesManager() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -26,10 +27,14 @@ export default function MessagesManager() {
     apiFetch<ApiMessage[]>('/admin/messages', { auth: true }).then((data) => setMessages(data.map(normalize))).catch(() => setMessages([]));
   }, []);
 
-  const filtered = messages.filter((m) =>
-    m.name.toLowerCase().includes(search.toLowerCase()) ||
-    m.subject.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filtered = messages.filter((m) => {
+    const q = search.toLowerCase();
+    return (
+      m.name.toLowerCase().includes(q) ||
+      m.subject.toLowerCase().includes(q) ||
+      (m.phone || '').toLowerCase().includes(q)
+    );
+  });
 
   const markRead = async (id: string) => {
     const updated = await apiFetch<ApiMessage>(`/admin/messages/${id}/read`, { method: 'PATCH', auth: true });
@@ -71,7 +76,28 @@ export default function MessagesManager() {
       <Dialog open={!!viewing} onOpenChange={() => setViewing(null)}>
         <DialogContent className="glass border-champagne/20 max-w-lg">
           <DialogHeader><DialogTitle className="font-display text-xl text-champagne tracking-wider">Message</DialogTitle></DialogHeader>
-          {viewing && (<div className="space-y-4 mt-4"><div><span className="text-muted-warm text-xs uppercase">From</span><p className="text-champagne">{viewing.name} ({viewing.email})</p></div><div><span className="text-muted-warm text-xs uppercase">Subject</span><p className="text-champagne">{viewing.subject}</p></div><div><span className="text-muted-warm text-xs uppercase">Message</span><p className="text-muted-warm text-sm mt-1 leading-relaxed">{viewing.message}</p></div></div>)}
+          {viewing && (
+            <div className="space-y-4 mt-4">
+              <div>
+                <span className="text-muted-warm text-xs uppercase">From</span>
+                <p className="text-champagne">{viewing.name} ({viewing.email})</p>
+              </div>
+              {viewing.phone ? (
+                <div>
+                  <span className="text-muted-warm text-xs uppercase">Phone</span>
+                  <p className="text-champagne">{viewing.phone}</p>
+                </div>
+              ) : null}
+              <div>
+                <span className="text-muted-warm text-xs uppercase">Subject</span>
+                <p className="text-champagne">{viewing.subject}</p>
+              </div>
+              <div>
+                <span className="text-muted-warm text-xs uppercase">Message</span>
+                <p className="text-muted-warm text-sm mt-1 leading-relaxed">{viewing.message}</p>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

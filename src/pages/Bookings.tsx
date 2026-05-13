@@ -1,8 +1,22 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mic2, Guitar, Music, Calendar, MapPin, Users, Send, Check, Clapperboard, PartyPopper } from 'lucide-react';
+import {
+  Mic2,
+  Guitar,
+  Music,
+  Calendar,
+  MapPin,
+  Users,
+  Send,
+  Check,
+  Clapperboard,
+  PartyPopper,
+  Phone,
+} from 'lucide-react';
 import ScrollReveal from '@/components/ScrollReveal';
 import { apiFetch } from '@/lib/api';
+import { telHref } from '@/lib/telLink';
+import { NativeSubmitButton } from '@/components/ui/submit-button';
 
 const EVENT_TYPES = [
   { id: 'live_show', label: 'Live Show', icon: Mic2 },
@@ -12,13 +26,13 @@ const EVENT_TYPES = [
   { id: 'event', label: 'Special Event', icon: PartyPopper },
 ];
 
-function BookingsHero() {
+function BookingsHero({ publicPhone }: { publicPhone: string }) {
+  const tel = telHref(publicPhone);
   return (
     <section className="relative min-h-[40vh] flex items-center overflow-hidden">
-      <div className="absolute inset-0">
-        <img src="/images/performances/perf-1.jpg" alt="" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-obsidian/80" />
-      </div>
+      <div className="absolute inset-0 bg-gradient-to-br from-obsidian via-olive/25 to-obsidian" />
+      <div className="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_30%_20%,rgba(139,115,64,0.3),transparent_55%)]" />
+      <div className="absolute inset-0 bg-obsidian/70" />
       <div className="relative z-10 px-[4vw] py-20">
         <motion.h1
           initial={{ opacity: 0, y: 40 }}
@@ -36,16 +50,32 @@ function BookingsHero() {
         >
           Available for live shows, studio sessions, and special events worldwide
         </motion.p>
+        {publicPhone.trim() && tel ? (
+          <motion.a
+            href={tel}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.55 }}
+            className="inline-flex items-center gap-2 mt-6 text-olive-light text-sm font-body hover:text-champagne transition-colors"
+          >
+            <Phone className="w-4 h-4" />
+            {publicPhone.trim()}
+          </motion.a>
+        ) : null}
       </div>
     </section>
   );
 }
 
-function BookingForm() {
+function BookingForm({ publicPhone }: { publicPhone: string }) {
   const [sent, setSent] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [eventType, setEventType] = useState('live_show');
+  const tel = telHref(publicPhone);
   const [form, setForm] = useState<{
+    contactName: string;
+    contactEmail: string;
+    contactPhone: string;
     eventName: string;
     date: string;
     budget: 'under_5k' | '5k_10k' | '10k_25k' | '25k_plus' | 'negotiable';
@@ -53,6 +83,9 @@ function BookingForm() {
     attendance: string;
     notes: string;
   }>({
+    contactName: '',
+    contactEmail: '',
+    contactPhone: '',
     eventName: '',
     date: '',
     budget: 'negotiable',
@@ -98,6 +131,7 @@ function BookingForm() {
                 </motion.div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-8">
+                  <fieldset disabled={isSending} className="space-y-8 border-0 p-0 m-0 min-w-0 disabled:opacity-75">
                   <div>
                     <label className="text-[11px] tracking-[0.2em] uppercase text-muted-warm mb-4 block">Event Type</label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -113,12 +147,50 @@ function BookingForm() {
                           }`}
                         >
                           <type.icon className={`w-6 h-6 ${eventType === type.id ? 'text-olive-light' : 'text-muted-warm'}`} />
-                          <span className={`text-[10px] tracking-wider uppercase ${eventType === type.id ? 'text-champagne' : 'text-muted-warm'}`}>
+                          <span
+                            className={`text-[10px] tracking-wider uppercase ${eventType === type.id ? 'text-champagne' : 'text-muted-warm'}`}
+                          >
                             {type.label}
                           </span>
                         </button>
                       ))}
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                      <label className="text-[11px] tracking-[0.2em] uppercase text-muted-warm mb-2 block">Your name</label>
+                      <input
+                        type="text"
+                        required
+                        value={form.contactName}
+                        onChange={(e) => setForm({ ...form, contactName: e.target.value })}
+                        className="w-full bg-transparent border-b border-champagne/30 pb-3 text-champagne font-body focus:outline-none focus:border-olive-light transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] tracking-[0.2em] uppercase text-muted-warm mb-2 block">Your email</label>
+                      <input
+                        type="email"
+                        required
+                        value={form.contactEmail}
+                        onChange={(e) => setForm({ ...form, contactEmail: e.target.value })}
+                        className="w-full bg-transparent border-b border-champagne/30 pb-3 text-champagne font-body focus:outline-none focus:border-olive-light transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] tracking-[0.2em] uppercase text-muted-warm mb-2 block">
+                      Your phone <span className="normal-case tracking-normal text-champagne/50">(optional)</span>
+                    </label>
+                    <input
+                      type="tel"
+                      value={form.contactPhone}
+                      onChange={(e) => setForm({ ...form, contactPhone: e.target.value })}
+                      placeholder="+1 …"
+                      className="w-full max-w-md bg-transparent border-b border-champagne/30 pb-3 text-champagne font-body focus:outline-none focus:border-olive-light transition-colors"
+                    />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -132,12 +204,14 @@ function BookingForm() {
                       />
                     </div>
                     <div>
-                      <label className="text-[11px] tracking-[0.2em] uppercase text-muted-warm mb-2 block">Date</label>
+                      <label className="text-[11px] tracking-[0.2em] uppercase text-muted-warm mb-2 block">
+                        Preferred date &amp; time
+                      </label>
                       <input
-                        type="date"
+                        type="datetime-local"
                         value={form.date}
                         onChange={(e) => setForm({ ...form, date: e.target.value })}
-                        className="w-full bg-transparent border-b border-champagne/30 pb-3 text-champagne font-body focus:outline-none focus:border-olive-light transition-colors [color-scheme:dark]"
+                        className="w-full min-h-[42px] rounded-md border border-champagne/30 bg-transparent px-3 py-2 font-mono text-sm text-champagne tabular-nums focus:outline-none focus:border-olive-light transition-colors [color-scheme:dark]"
                       />
                     </div>
                   </div>
@@ -188,20 +262,36 @@ function BookingForm() {
                     />
                   </div>
 
-                  <button
+                  <NativeSubmitButton
                     type="submit"
-                    disabled={isSending}
-                    className="w-full bg-olive text-obsidian py-4 rounded-full text-[11px] tracking-[0.2em] uppercase font-body hover:bg-olive-light transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    pending={isSending}
+                    className="w-full bg-olive text-white py-4 rounded-full text-[11px] tracking-[0.2em] uppercase font-body hover:bg-olive-light hover:text-white transition-colors flex items-center justify-center gap-2"
                   >
                     <Send className="w-4 h-4" />
-                    {isSending ? 'Sending...' : 'Request Booking'}
-                  </button>
+                    Request Booking
+                  </NativeSubmitButton>
+                  </fieldset>
                 </form>
               )}
             </ScrollReveal>
           </div>
 
           <div className="space-y-8">
+            {publicPhone.trim() && tel ? (
+              <ScrollReveal delay={0.1}>
+                <div className="glass rounded-lg p-6">
+                  <h3 className="font-display text-xl text-champagne tracking-wider mb-2">Call or text</h3>
+                  <a href={tel} className="text-olive-light text-lg font-body hover:text-champagne transition-colors inline-flex items-center gap-2">
+                    <Phone className="w-5 h-5 shrink-0" />
+                    {publicPhone.trim()}
+                  </a>
+                  <p className="text-muted-warm text-xs mt-3 leading-relaxed">
+                    Prefer email? Use the form — or reach this number for urgent booking questions.
+                  </p>
+                </div>
+              </ScrollReveal>
+            ) : null}
+
             <ScrollReveal delay={0.2}>
               <div className="glass rounded-lg p-6">
                 <h3 className="font-display text-xl text-champagne tracking-wider mb-4">What to Expect</h3>
@@ -242,10 +332,18 @@ function BookingForm() {
 }
 
 export default function Bookings() {
+  const [publicPhone, setPublicPhone] = useState('');
+
+  useEffect(() => {
+    apiFetch<{ publicPhone?: string }>('/site-content')
+      .then((data) => setPublicPhone(data.publicPhone?.trim() ?? ''))
+      .catch(() => setPublicPhone(''));
+  }, []);
+
   return (
     <main>
-      <BookingsHero />
-      <BookingForm />
+      <BookingsHero publicPhone={publicPhone} />
+      <BookingForm publicPhone={publicPhone} />
     </main>
   );
 }

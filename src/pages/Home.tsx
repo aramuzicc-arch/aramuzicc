@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -6,7 +6,11 @@ import { Play, Calendar, Music, Headphones, Radio, Disc3 } from 'lucide-react';
 import CrimsonVoid from '@/components/CrimsonVoid';
 import ScrollReveal from '@/components/ScrollReveal';
 import TiltCard from '@/components/TiltCard';
-import { ALBUMS, EVENTS } from '@/types';
+import type { Album } from '@/types';
+import { apiFetch } from '@/lib/api';
+
+type LiveShowApi = { _id: string; title: string; subtitle: string; image: string; videoUrl?: string };
+type TourApi = { _id: string; dateLabel: string; venue: string; location: string; ticketUrl?: string };
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -79,7 +83,7 @@ function HeroSection() {
   );
 }
 
-function ReleasesSection() {
+function ReleasesSection({ albums }: { albums: Album[] }) {
   return (
     <section className="relative min-h-[100dvh] flex flex-col justify-center py-20 bg-obsidian overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(107,124,63,0.06)_0%,transparent_70%)]" />
@@ -95,45 +99,48 @@ function ReleasesSection() {
           </div>
         </ScrollReveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {ALBUMS.slice(0, 3).map((album, i) => (
-            <ScrollReveal key={album.id} delay={i * 0.15} y={80}>
-              <TiltCard>
-                <div className="group cursor-pointer">
-                  <div className="relative overflow-hidden rounded-lg mb-4">
-                    <img
-                      src={album.coverImage}
-                      alt={album.title}
-                      className="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-105"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-obsidian/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  </div>
-                  <div className="glass rounded-lg p-4">
-                    <h3 className="font-display text-xl tracking-wider text-champagne">{album.title}</h3>
-                    <div className="flex items-center gap-3 mt-2">
-                      <span className="px-3 py-1 rounded-full border border-olive-light/40 text-olive-light text-[10px] font-mono tracking-wider">{album.genre}</span>
-                      <span className="text-muted-warm text-xs">{album.releaseDate}</span>
+        {albums.length === 0 ? (
+          <p className="text-muted-warm text-center max-w-md mx-auto text-sm">
+            Mark releases as &quot;Latest drop&quot; when{' '}
+            <Link to="/admin/music?new=1" className="text-champagne underline underline-offset-4 hover:text-olive-light">
+              adding or editing music in admin
+            </Link>
+            ; they appear here automatically.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {albums.slice(0, 6).map((album, i) => (
+              <ScrollReveal key={album.id} delay={i * 0.15} y={80}>
+                <TiltCard>
+                  <Link to="/catalog" className="group block">
+                    <div className="relative overflow-hidden rounded-lg mb-4">
+                      <img
+                        src={album.coverImage}
+                        alt={album.title}
+                        className="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-obsidian/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     </div>
-                  </div>
-                </div>
-              </TiltCard>
-            </ScrollReveal>
-          ))}
-        </div>
+                    <div className="glass rounded-lg p-4">
+                      <h3 className="font-display text-xl tracking-wider text-champagne">{album.title}</h3>
+                      <div className="flex items-center gap-3 mt-2">
+                        <span className="px-3 py-1 rounded-full border border-olive-light/40 text-olive-light text-[10px] font-mono tracking-wider">{album.genre}</span>
+                        <span className="text-muted-warm text-xs">{album.releaseDate}</span>
+                      </div>
+                    </div>
+                  </Link>
+                </TiltCard>
+              </ScrollReveal>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
 }
 
-function PerformancesSection() {
-  const performances = [
-    { title: 'ARENA TOUR 2024', subtitle: 'Highlights', img: '/images/gallery/gallery7.jpg' },
-    { title: 'FESTIVAL SET', subtitle: 'Electric Forest', img: '/images/gallery/gallery8.jpg' },
-    { title: 'ACOUSTIC SESSIONS', subtitle: 'Stripped Down', img: '/images/gallery/gallery9.jpg' },
-    { title: 'STUDIO LIVE', subtitle: 'One Take', img: '/images/gallery/gallery10.jpg' },
-  ];
-
+function PerformancesSection({ shows }: { shows: LiveShowApi[] }) {
   return (
     <section className="relative py-20 bg-obsidian">
       <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 256 256%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22n%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.9%22 numOctaves=%224%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23n)%22/%3E%3C/svg%3E")' }} />
@@ -142,31 +149,59 @@ function PerformancesSection() {
           <h2 className="section-header text-right text-olive-light mb-12">Live Energy</h2>
         </ScrollReveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-6xl mx-auto">
-          {performances.map((perf, i) => (
-            <ScrollReveal key={i} delay={i * 0.1}>
-              <div className="group relative aspect-video rounded-lg overflow-hidden cursor-pointer">
-                <img src={perf.img} alt={perf.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
-                <div className="absolute inset-0 bg-obsidian/40 group-hover:bg-obsidian/60 transition-colors duration-500" />
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                  <div className="w-12 h-12 rounded-full bg-olive-light flex items-center justify-center">
-                    <Play className="w-5 h-5 text-obsidian ml-0.5" />
+        {shows.length === 0 ? (
+          <p className="text-muted-warm text-sm text-center">
+            No live shows yet.{' '}
+            <Link to="/admin/live-shows?new=1" className="text-champagne underline underline-offset-4 hover:text-olive-light">
+              Add one in admin
+            </Link>
+            .
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-6xl mx-auto">
+            {shows.map((perf, i) => (
+              <ScrollReveal key={perf._id} delay={i * 0.1}>
+                <div className="group relative aspect-video rounded-lg overflow-hidden">
+                  {perf.videoUrl ? (
+                    <video
+                      src={perf.videoUrl}
+                      poster={perf.image || undefined}
+                      className="w-full h-full object-cover"
+                      controls
+                      playsInline
+                      preload="metadata"
+                    />
+                  ) : (
+                    <img
+                      src={perf.image}
+                      alt={perf.title}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-obsidian/40 group-hover:bg-obsidian/60 transition-colors duration-500 pointer-events-none" />
+                  {!perf.videoUrl ? (
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+                      <div className="w-12 h-12 rounded-full bg-olive-light flex items-center justify-center">
+                        <Play className="w-5 h-5 text-obsidian ml-0.5" />
+                      </div>
+                    </div>
+                  ) : null}
+                  <div className="absolute bottom-0 left-0 right-0 p-4 glass-light pointer-events-none">
+                    <p className="font-display text-lg tracking-wider text-champagne">{perf.title}</p>
+                    <p className="text-muted-warm text-xs">{perf.subtitle}</p>
                   </div>
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 p-4 glass-light">
-                  <p className="font-display text-lg tracking-wider text-champagne">{perf.title}</p>
-                  <p className="text-muted-warm text-xs">{perf.subtitle}</p>
-                </div>
-              </div>
-            </ScrollReveal>
-          ))}
-        </div>
+              </ScrollReveal>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
 }
 
-function EventsSection() {
+function EventsSection({ dates }: { dates: TourApi[] }) {
   return (
     <section className="relative py-20 bg-gradient-to-b from-obsidian to-olive/20">
       <div className="px-[4vw]">
@@ -174,20 +209,41 @@ function EventsSection() {
           <h2 className="section-header mb-12">On Tour</h2>
         </ScrollReveal>
 
-        <div className="max-w-4xl">
-          {EVENTS.map((event, i) => (
-            <ScrollReveal key={event.id} delay={i * 0.12}>
-              <div className="group flex items-center gap-6 py-6 border-b border-champagne/10 cursor-pointer hover:bg-olive/5 hover:border-l-[3px] hover:border-l-olive-light hover:pl-4 transition-all duration-300 -ml-4 pl-4">
-                <span className="font-mono text-xl md:text-2xl text-olive-light min-w-[80px]">{event.date}</span>
-                <div className="flex-1">
-                  <p className="font-body text-base md:text-lg text-champagne tracking-wide">{event.venue}</p>
+        {dates.length === 0 ? (
+          <p className="text-muted-warm text-sm">
+            No tour dates yet.{' '}
+            <Link to="/admin/tour?new=1" className="text-champagne underline underline-offset-4 hover:text-olive-light">
+              Add dates in admin
+            </Link>
+            .
+          </p>
+        ) : (
+          <div className="max-w-4xl">
+            {dates.map((event, i) => (
+              <ScrollReveal key={event._id} delay={i * 0.12}>
+                <div className="group flex items-center gap-6 py-6 border-b border-champagne/10 hover:bg-olive/5 hover:border-l-[3px] hover:border-l-olive-light hover:pl-4 transition-all duration-300 -ml-4 pl-4">
+                  <span className="font-mono text-xl md:text-2xl text-olive-light min-w-[80px]">{event.dateLabel}</span>
+                  <div className="flex-1">
+                    <p className="font-body text-base md:text-lg text-champagne tracking-wide">{event.venue}</p>
+                  </div>
+                  <span className="text-muted-warm text-sm hidden sm:block">{event.location}</span>
+                  {event.ticketUrl ? (
+                    <a
+                      href={event.ticketUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-olive-light text-xs uppercase tracking-wider hover:underline"
+                    >
+                      Tickets
+                    </a>
+                  ) : (
+                    <Calendar className="w-4 h-4 text-muted-warm group-hover:text-olive-light transition-colors" />
+                  )}
                 </div>
-                <span className="text-muted-warm text-sm hidden sm:block">{event.location}</span>
-                <Calendar className="w-4 h-4 text-muted-warm group-hover:text-olive-light transition-colors" />
-              </div>
-            </ScrollReveal>
-          ))}
-        </div>
+              </ScrollReveal>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
@@ -243,12 +299,42 @@ function SocialSection() {
 }
 
 export default function Home() {
+  const [latestDrops, setLatestDrops] = useState<Album[]>([]);
+  const [liveShows, setLiveShows] = useState<LiveShowApi[]>([]);
+  const [tourDates, setTourDates] = useState<TourApi[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [dropsRaw, shows, tours] = await Promise.all([
+          apiFetch<(Omit<Album, 'id'> & { _id: string })[]>('/albums?latestDrops=true'),
+          apiFetch<LiveShowApi[]>('/live-shows'),
+          apiFetch<TourApi[]>('/tour-dates'),
+        ]);
+        if (cancelled) return;
+        setLatestDrops(dropsRaw.map((a) => ({ ...a, id: a._id })));
+        setLiveShows(shows);
+        setTourDates(tours);
+      } catch {
+        if (!cancelled) {
+          setLatestDrops([]);
+          setLiveShows([]);
+          setTourDates([]);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <main>
       <HeroSection />
-      <ReleasesSection />
-      <PerformancesSection />
-      <EventsSection />
+      <ReleasesSection albums={latestDrops} />
+      <PerformancesSection shows={liveShows} />
+      <EventsSection dates={tourDates} />
       <SocialSection />
     </main>
   );

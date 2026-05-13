@@ -1,18 +1,37 @@
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import ScrollReveal from '@/components/ScrollReveal';
-import { MILESTONES } from '@/types';
 import CountUp from 'react-countup';
+import { apiFetch } from '@/lib/api';
 
 gsap.registerPlugin(ScrollTrigger);
 
-function AboutHero() {
+type TimelineRow = { year: string; title: string; description: string; order: number };
+type StatRow = { value: number; suffix: string; label: string; order: number };
+
+type SitePayload = {
+  aboutHeroTagline: string;
+  aboutHeroImage: string;
+  aboutPortraitImage: string;
+  aboutBioParagraphs: string[];
+  timeline: TimelineRow[];
+  stats: StatRow[];
+};
+
+function AboutHero({ tagline, image }: { tagline: string; image: string }) {
   return (
     <section className="relative min-h-[80vh] flex items-center overflow-hidden">
       <div className="absolute inset-0">
-        <img src="/images/gallery/gallery1.jpg" alt="ARA MUZICC" className="w-full h-full object-cover object-right" />
-        <div className="absolute inset-0 bg-gradient-to-r from-obsidian via-obsidian/80 to-transparent" />
+        {image ? (
+          <>
+            <img src={image} alt="ARA MUZICC" className="w-full h-full object-cover object-right" />
+            <div className="absolute inset-0 bg-gradient-to-r from-obsidian via-obsidian/80 to-transparent" />
+          </>
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-obsidian via-olive/20 to-obsidian" />
+        )}
       </div>
       <div className="relative z-10 px-[4vw] py-20 max-w-3xl">
         <motion.h1
@@ -29,26 +48,30 @@ function AboutHero() {
           transition={{ delay: 0.6, duration: 0.8 }}
           className="font-script text-xl md:text-2xl text-olive-light mt-6"
         >
-          Music is the language of the soul, and I&apos;m here to make it scream.
+          {tagline}
         </motion.p>
       </div>
     </section>
   );
 }
 
-function BioSection() {
+function BioSection({ portrait, paragraphs }: { portrait: string; paragraphs: string[] }) {
   return (
     <section className="relative py-20 bg-obsidian">
       <div className="px-[4vw] max-w-6xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <ScrollReveal>
             <div className="relative">
-              <img
-                src="/images/gallery/gallery3.jpg"
-                alt="ARA MUZICC Artist Portrait"
-                className="w-full aspect-[3/4] object-cover rounded-lg"
-                loading="lazy"
-              />
+              {portrait ? (
+                <img
+                  src={portrait}
+                  alt="ARA MUZICC Artist Portrait"
+                  className="w-full aspect-[3/4] object-cover rounded-lg"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="w-full aspect-[3/4] rounded-lg bg-gradient-to-br from-champagne/10 to-olive/20 border border-champagne/10" />
+              )}
               <div className="absolute -bottom-4 -right-4 w-24 h-24 border border-olive-light/30 rounded-lg" />
             </div>
           </ScrollReveal>
@@ -56,21 +79,11 @@ function BioSection() {
             <ScrollReveal delay={0.1}>
               <h2 className="font-display text-4xl md:text-6xl tracking-wider text-champagne">Bio</h2>
             </ScrollReveal>
-            <ScrollReveal delay={0.2}>
-              <p className="text-muted-warm font-body leading-relaxed">
-                Born from the underground music scene of Los Angeles, ARA MUZICC emerged as a force that defies genre boundaries. Starting as a self-taught guitarist at age 14, the journey from bedroom recordings to sold-out arenas has been nothing short of extraordinary.
-              </p>
-            </ScrollReveal>
-            <ScrollReveal delay={0.3}>
-              <p className="text-muted-warm font-body leading-relaxed">
-                With a sound that fuses alternative rock, electronic production, and virtuosic guitar work, ARA MUZICC has created a sonic identity that is unmistakably unique. Each album represents a chapter in an evolving story - from the raw energy of &quot;PRISM&quot; (2021) to the sophisticated darkness of &quot;MIDNIGHT ECHO&quot; (2025).
-              </p>
-            </ScrollReveal>
-            <ScrollReveal delay={0.4}>
-              <p className="text-muted-warm font-body leading-relaxed">
-                The live experience is where ARA MUZICC truly comes alive. Known for immersive stage designs, pyrotechnic displays, and extended improvisational sections, every show is a one-of-a-kind event that leaves audiences transformed.
-              </p>
-            </ScrollReveal>
+            {paragraphs.map((p, i) => (
+              <ScrollReveal key={i} delay={0.15 + i * 0.08}>
+                <p className="text-muted-warm font-body leading-relaxed">{p}</p>
+              </ScrollReveal>
+            ))}
           </div>
         </div>
       </div>
@@ -78,7 +91,8 @@ function BioSection() {
   );
 }
 
-function TimelineSection() {
+function TimelineSection({ timeline }: { timeline: TimelineRow[] }) {
+  const sorted = [...timeline].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   return (
     <section className="relative py-20 bg-gradient-to-b from-obsidian to-olive/10">
       <div className="px-[4vw] max-w-4xl mx-auto">
@@ -88,8 +102,8 @@ function TimelineSection() {
 
         <div className="relative">
           <div className="absolute left-4 md:left-1/2 md:-translate-x-px top-0 bottom-0 w-0.5 bg-champagne/10" />
-          {MILESTONES.map((milestone, i) => (
-            <ScrollReveal key={milestone.year} delay={i * 0.1}>
+          {sorted.map((milestone, i) => (
+            <ScrollReveal key={`${milestone.year}-${milestone.title}-${i}`} delay={i * 0.1}>
               <div className={`relative flex items-start gap-8 mb-12 ${i % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`}>
                 <div className={`flex-1 ${i % 2 === 0 ? 'md:text-right' : 'md:text-left'} pl-12 md:pl-0`}>
                   <span className="font-mono text-2xl text-olive-light">{milestone.year}</span>
@@ -107,14 +121,8 @@ function TimelineSection() {
   );
 }
 
-function StatsSection() {
-  const stats = [
-    { value: 500, suffix: 'M+', label: 'STREAMS' },
-    { value: 50, suffix: '+', label: 'COUNTRIES' },
-    { value: 200, suffix: '+', label: 'LIVE SHOWS' },
-    { value: 4, suffix: '', label: 'ALBUMS' },
-  ];
-
+function StatsSection({ stats }: { stats: StatRow[] }) {
+  const sorted = [...stats].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   return (
     <section className="relative py-32 bg-obsidian">
       <div className="px-[4vw] max-w-6xl mx-auto">
@@ -123,7 +131,7 @@ function StatsSection() {
         </ScrollReveal>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-          {stats.map((stat, i) => (
+          {sorted.map((stat, i) => (
             <ScrollReveal key={stat.label} delay={i * 0.15}>
               <div className="text-center">
                 <div className="font-display text-[clamp(48px,8vw,100px)] text-olive-light leading-none">
@@ -140,12 +148,28 @@ function StatsSection() {
 }
 
 export default function About() {
+  const [site, setSite] = useState<SitePayload | null>(null);
+
+  useEffect(() => {
+    apiFetch<SitePayload>('/site-content')
+      .then(setSite)
+      .catch(() => setSite(null));
+  }, []);
+
+  if (!site) {
+    return (
+      <main className="min-h-[50vh] flex items-center justify-center bg-obsidian text-muted-warm text-sm">
+        Loading…
+      </main>
+    );
+  }
+
   return (
     <main>
-      <AboutHero />
-      <BioSection />
-      <TimelineSection />
-      <StatsSection />
+      <AboutHero tagline={site.aboutHeroTagline} image={site.aboutHeroImage} />
+      <BioSection portrait={site.aboutPortraitImage} paragraphs={site.aboutBioParagraphs} />
+      <TimelineSection timeline={site.timeline} />
+      <StatsSection stats={site.stats} />
     </main>
   );
 }

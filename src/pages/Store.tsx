@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router';
 import { ShoppingCart } from 'lucide-react';
-import { PRODUCTS, type Product } from '@/types';
+import type { Product } from '@/types';
 import { useCartStore } from '@/stores/cartStore';
 import { apiFetch } from '@/lib/api';
 
@@ -9,13 +10,13 @@ const CATEGORIES = ['ALL', 'CLOTHING', 'ACCESSORIES', 'DIGITAL'];
 
 export default function Store() {
   const [activeCategory, setActiveCategory] = useState('ALL');
-  const [products, setProducts] = useState<Product[]>(PRODUCTS);
+  const [products, setProducts] = useState<Product[]>([]);
   const { addItem } = useCartStore();
 
   useEffect(() => {
     apiFetch<(Omit<Product, 'id'> & { _id: string })[]>('/products')
       .then((data) => setProducts(data.map((item) => ({ ...item, id: item._id }))))
-      .catch(() => setProducts(PRODUCTS));
+      .catch(() => setProducts([]));
   }, []);
 
   const filtered = activeCategory === 'ALL' ? products : products.filter((p) => p.category === activeCategory.toLowerCase());
@@ -37,7 +38,18 @@ export default function Store() {
             ))}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filtered.map((product) => (
+            {filtered.length === 0 ? (
+              <div className="col-span-full text-center py-16 px-6">
+                <p className="text-muted-warm text-sm max-w-md mx-auto">
+                  No products in the database yet. Add SKUs in the admin under{' '}
+                  <Link to="/admin/products?new=1" className="text-champagne underline underline-offset-4 hover:text-olive-light">
+                    Store products
+                  </Link>
+                  ; they appear here for visitors automatically.
+                </p>
+              </div>
+            ) : (
+              filtered.map((product) => (
               <div key={product.id} className="group">
                 <div className="relative aspect-square rounded-lg overflow-hidden mb-4 bg-[#2a2824]">
                   <img src={product.image} alt={product.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy"
@@ -61,7 +73,8 @@ export default function Store() {
                   </div>
                 </div>
               </div>
-            ))}
+            ))
+            )}
           </div>
         </div>
       </section>

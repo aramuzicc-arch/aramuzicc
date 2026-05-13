@@ -12,13 +12,18 @@ import Bookings from '@/pages/Bookings';
 import About from '@/pages/About';
 import Checkout from '@/pages/Checkout';
 import AdminLogin from '@/pages/admin/Login';
-import AdminDashboard from '@/pages/admin/Dashboard';
+import AdminLayout from '@/layouts/AdminLayout';
+import DashboardHome from '@/pages/admin/DashboardHome';
 import MusicManager from '@/pages/admin/MusicManager';
 import ProductManager from '@/pages/admin/ProductManager';
 import GalleryManager from '@/pages/admin/GalleryManager';
 import MessagesManager from '@/pages/admin/MessagesManager';
 import BookingsManager from '@/pages/admin/BookingsManager';
 import SettingsPage from '@/pages/admin/Settings';
+import AboutContentManager from '@/pages/admin/AboutContentManager';
+import LiveShowsManager from '@/pages/admin/LiveShowsManager';
+import TourManager from '@/pages/admin/TourManager';
+import OrdersManager from '@/pages/admin/OrdersManager';
 
 function PageTransition({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -70,13 +75,19 @@ export default function App() {
         <Route path="/about" element={<About />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/music" element={<MusicManager />} />
-        <Route path="/admin/products" element={<ProductManager />} />
-        <Route path="/admin/gallery" element={<GalleryManager />} />
-        <Route path="/admin/messages" element={<MessagesManager />} />
-        <Route path="/admin/bookings" element={<BookingsManager />} />
-        <Route path="/admin/settings" element={<SettingsPage />} />
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<DashboardHome />} />
+          <Route path="about" element={<AboutContentManager />} />
+          <Route path="music" element={<MusicManager />} />
+          <Route path="live-shows" element={<LiveShowsManager />} />
+          <Route path="tour" element={<TourManager />} />
+          <Route path="products" element={<ProductManager />} />
+          <Route path="orders" element={<OrdersManager />} />
+          <Route path="gallery" element={<GalleryManager />} />
+          <Route path="messages" element={<MessagesManager />} />
+          <Route path="bookings" element={<BookingsManager />} />
+          <Route path="settings" element={<SettingsPage />} />
+        </Route>
       </Routes>
     </MainLayout>
   );

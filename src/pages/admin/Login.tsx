@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { motion } from 'framer-motion';
 import { Lock, User } from 'lucide-react';
 import CrimsonVoid from '@/components/CrimsonVoid';
 import { apiFetch, setToken } from '@/lib/api';
+import { NativeSubmitButton } from '@/components/ui/submit-button';
 
 export default function AdminLogin() {
   const [username, setUsername] = useState('');
@@ -11,6 +12,7 @@ export default function AdminLogin() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,7 +24,10 @@ export default function AdminLogin() {
         body: JSON.stringify({ username, password }),
       });
       setToken(response.token);
-      navigate('/admin');
+      const raw = searchParams.get('redirect') || '';
+      const safe =
+        raw.startsWith('/admin') && !raw.startsWith('//') && !raw.includes('://') ? raw : '/admin';
+      navigate(safe);
     } catch {
       setError('Invalid credentials');
     } finally {
@@ -42,6 +47,7 @@ export default function AdminLogin() {
         <div className="glass rounded-2xl p-8">
           <h1 className="font-display text-3xl text-champagne tracking-wider text-center mb-8">ADMIN PORTAL</h1>
           <form onSubmit={handleSubmit} className="space-y-6">
+            <fieldset disabled={isLoading} className="space-y-6 border-0 p-0 m-0 min-w-0 disabled:opacity-80">
             <div>
               <label className="text-[11px] tracking-[0.2em] uppercase text-muted-warm mb-2 block">Username</label>
               <div className="relative">
@@ -68,14 +74,15 @@ export default function AdminLogin() {
                 />
               </div>
             </div>
+            </fieldset>
             {error && <p className="text-amber-700 text-sm">{error}</p>}
-            <button
+            <NativeSubmitButton
               type="submit"
-              disabled={isLoading}
-              className="w-full bg-olive text-obsidian py-3 rounded-full text-[11px] tracking-[0.2em] uppercase font-body hover:bg-olive-light transition-colors"
+              pending={isLoading}
+              className="w-full bg-olive text-white py-3 rounded-full text-[11px] tracking-[0.2em] uppercase font-body hover:bg-olive-light hover:text-white transition-colors"
             >
-              {isLoading ? 'Signing In...' : 'Sign In'}
-            </button>
+              Sign In
+            </NativeSubmitButton>
           </form>
         </div>
       </motion.div>

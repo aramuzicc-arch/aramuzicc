@@ -54,6 +54,10 @@ module.exports = {
         rose: '#FF7B6B',
         champagne: '#F5E6D3',
         'muted-warm': '#8A7A72',
+        /** Brand greens — used across site; keep text on these buttons white for contrast */
+        olive: '#6b7c3f',
+        'olive-light': '#8b7340',
+        'olive-muted': '#5a6633',
       },
       fontFamily: {
         display: ['Bebas Neue', 'sans-serif'],

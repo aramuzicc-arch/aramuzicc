@@ -1,11 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Send, Check, Music, Instagram, Youtube, Twitter } from 'lucide-react';
+import { Send, Check, Music, Instagram, Youtube, Twitter, Phone } from 'lucide-react';
 import CrimsonVoid from '@/components/CrimsonVoid';
 import ScrollReveal from '@/components/ScrollReveal';
 import { apiFetch } from '@/lib/api';
+import { telHref } from '@/lib/telLink';
+import { NativeSubmitButton } from '@/components/ui/submit-button';
 
-function ContactHero() {
+function ContactHero({ publicPhone }: { publicPhone: string }) {
+  const tel = telHref(publicPhone);
   return (
     <section className="relative min-h-[40vh] flex items-center justify-center overflow-hidden">
       <CrimsonVoid />
@@ -26,15 +29,28 @@ function ContactHero() {
         >
           For bookings, press, and collaborations
         </motion.p>
+        {publicPhone.trim() && tel ? (
+          <motion.a
+            href={tel}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.55 }}
+            className="inline-flex items-center gap-2 mt-6 text-olive-light text-sm font-body hover:text-champagne transition-colors"
+          >
+            <Phone className="w-4 h-4" />
+            {publicPhone.trim()}
+          </motion.a>
+        ) : null}
       </div>
     </section>
   );
 }
 
-function ContactForm() {
+function ContactForm({ publicPhone }: { publicPhone: string }) {
   const [sent, setSent] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [form, setForm] = useState({ name: '', email: '', subject: 'General', message: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', subject: 'General', message: '' });
+  const tel = telHref(publicPhone);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,6 +83,7 @@ function ContactForm() {
                 </motion.div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-6">
+                  <fieldset disabled={isSending} className="space-y-6 border-0 p-0 m-0 min-w-0 disabled:opacity-75">
                   <div>
                     <label className="text-[11px] tracking-[0.2em] uppercase text-muted-warm mb-2 block">Name</label>
                     <input
@@ -84,6 +101,18 @@ function ContactForm() {
                       required
                       value={form.email}
                       onChange={(e) => setForm({ ...form, email: e.target.value })}
+                      className="w-full bg-transparent border-b border-champagne/30 pb-3 text-champagne font-body focus:outline-none focus:border-olive-light transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] tracking-[0.2em] uppercase text-muted-warm mb-2 block">
+                      Your phone <span className="normal-case tracking-normal text-champagne/50">(optional)</span>
+                    </label>
+                    <input
+                      type="tel"
+                      value={form.phone}
+                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                      placeholder="+1 …"
                       className="w-full bg-transparent border-b border-champagne/30 pb-3 text-champagne font-body focus:outline-none focus:border-olive-light transition-colors"
                     />
                   </div>
@@ -110,24 +139,39 @@ function ContactForm() {
                       className="w-full bg-transparent border-b border-champagne/30 pb-3 text-champagne font-body focus:outline-none focus:border-olive-light transition-colors resize-none"
                     />
                   </div>
-                  <button
+                  <NativeSubmitButton
                     type="submit"
-                    disabled={isSending}
-                    className="w-full bg-olive text-obsidian py-4 rounded-full text-[11px] tracking-[0.2em] uppercase font-body hover:bg-olive-light transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    pending={isSending}
+                    className="w-full bg-olive text-white py-4 rounded-full text-[11px] tracking-[0.2em] uppercase font-body hover:bg-olive-light hover:text-white transition-colors flex items-center justify-center gap-2"
                   >
                     <Send className="w-4 h-4" />
-                    {isSending ? 'Sending...' : 'Send Message'}
-                  </button>
+                    Send Message
+                  </NativeSubmitButton>
+                  </fieldset>
                 </form>
               )}
             </ScrollReveal>
           </div>
 
           <div className="lg:col-span-2 space-y-8">
+            {publicPhone.trim() && tel ? (
+              <ScrollReveal delay={0.1}>
+                <div>
+                  <p className="text-olive-light text-[11px] tracking-[0.3em] uppercase mb-2">Phone</p>
+                  <a href={tel} className="text-champagne font-body text-lg hover:text-olive-light transition-colors inline-flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-olive-light shrink-0" />
+                    {publicPhone.trim()}
+                  </a>
+                </div>
+              </ScrollReveal>
+            ) : null}
             <ScrollReveal delay={0.2}>
               <div>
                 <p className="text-olive-light text-[11px] tracking-[0.3em] uppercase mb-2">Management</p>
-                <a href="mailto:management@aramuzicc.music" className="text-champagne font-body hover:text-olive-light transition-colors">
+                <a
+                  href="mailto:management@aramuzicc.music"
+                  className="text-champagne font-body hover:text-olive-light transition-colors"
+                >
                   management@aramuzicc.music
                 </a>
               </div>
@@ -135,7 +179,10 @@ function ContactForm() {
             <ScrollReveal delay={0.3}>
               <div>
                 <p className="text-olive-light text-[11px] tracking-[0.3em] uppercase mb-2">Booking Agent</p>
-                <a href="mailto:bookings@aramuzicc.music" className="text-champagne font-body hover:text-olive-light transition-colors">
+                <a
+                  href="mailto:bookings@aramuzicc.music"
+                  className="text-champagne font-body hover:text-olive-light transition-colors"
+                >
                   bookings@aramuzicc.music
                 </a>
               </div>
@@ -150,7 +197,12 @@ function ContactForm() {
                     { icon: Youtube, label: 'YouTube' },
                     { icon: Twitter, label: 'Twitter' },
                   ].map(({ icon: Icon, label }) => (
-                    <a key={label} href="#" className="w-10 h-10 rounded-full glass flex items-center justify-center text-muted-warm hover:text-olive-light transition-colors" aria-label={label}>
+                    <a
+                      key={label}
+                      href="#"
+                      className="w-10 h-10 rounded-full glass flex items-center justify-center text-muted-warm hover:text-olive-light transition-colors"
+                      aria-label={label}
+                    >
                       <Icon className="w-4 h-4" />
                     </a>
                   ))}
@@ -165,10 +217,18 @@ function ContactForm() {
 }
 
 export default function Contact() {
+  const [publicPhone, setPublicPhone] = useState('');
+
+  useEffect(() => {
+    apiFetch<{ publicPhone?: string }>('/site-content')
+      .then((data) => setPublicPhone(data.publicPhone?.trim() ?? ''))
+      .catch(() => setPublicPhone(''));
+  }, []);
+
   return (
     <main>
-      <ContactHero />
-      <ContactForm />
+      <ContactHero publicPhone={publicPhone} />
+      <ContactForm publicPhone={publicPhone} />
     </main>
   );
 }

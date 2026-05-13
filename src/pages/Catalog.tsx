@@ -1,10 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { Link } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, ChevronLeft, ChevronRight, Volume2, VolumeX, ExternalLink, Headphones } from 'lucide-react';
-import { ALBUMS } from '@/types';
 import type { Album } from '@/types';
 import CrimsonVoid from '@/components/CrimsonVoid';
 import { apiFetch } from '@/lib/api';
+import { useResponsiveCarousel } from '@/hooks/useResponsiveCarousel';
 
 /* ============================================
    AUDIO PLAYER WITH STREAMING PLATFORM LINKS
@@ -75,33 +76,35 @@ function AudioPlayer({ album }: { album: Album }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.2 }}
-      className="w-full glass rounded-lg p-4 space-y-3"
+      className="w-full glass rounded-lg p-3 sm:p-4 space-y-3 touch-manipulation"
     >
       {/* Play row */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={togglePlay}
-          className="w-10 h-10 rounded-full bg-olive-light flex items-center justify-center text-obsidian hover:bg-olive-muted transition-colors flex-shrink-0"
+          type="button"
+          className="min-h-[44px] min-w-[44px] rounded-full bg-olive-light flex items-center justify-center text-obsidian hover:bg-olive-muted transition-colors flex-shrink-0"
         >
-          {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+          {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
         </motion.button>
         <div className="flex-1 min-w-0">
           <p className="text-champagne text-sm font-medium truncate">{album.title}</p>
           <p className="text-muted-warm text-[10px] font-mono">{currentTime} / {duration}</p>
         </div>
         <button
+          type="button"
           onClick={() => setIsMuted(!isMuted)}
-          className="w-8 h-8 flex items-center justify-center text-muted-warm hover:text-champagne transition-colors"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-warm hover:text-champagne transition-colors rounded-full"
         >
-          {isMuted || volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+          {isMuted || volume === 0 ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
         </button>
       </div>
 
       {/* Waveform scrubber */}
       <div
         ref={waveformRef}
-        className="relative h-10 cursor-pointer select-none"
+        className="relative h-11 sm:h-10 cursor-pointer select-none"
         onPointerDown={(e) => {
           setIsDragging(true);
           handleScrub(e.clientX);
@@ -143,7 +146,7 @@ function AudioPlayer({ album }: { album: Album }) {
       {/* Streaming Platform Links */}
       <div className="pt-2 border-t border-champagne/10">
         <p className="text-[9px] tracking-[0.15em] uppercase text-muted-warm mb-2">Listen Full Track On</p>
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap justify-center sm:justify-start">
           {streamingLinks.spotify && (
             <a href={streamingLinks.spotify} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1DB954]/10 border border-[#1DB954]/30 text-[#1DB954] text-[10px] hover:bg-[#1DB954]/20 transition-colors">
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
@@ -184,18 +187,38 @@ function AudioPlayer({ album }: { album: Album }) {
    YOUTUBE VIDEO CARD
    ============================================ */
 function VideoCard({ album }: { album: Album }) {
+  if (album.cloudinaryVideoUrl) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="w-full glass rounded-lg p-3 mt-3 sm:mt-4 border border-champagne/10"
+      >
+        <p className="text-champagne text-sm font-medium mb-2">{album.title}</p>
+        <video
+          src={album.cloudinaryVideoUrl}
+          className="w-full rounded-md max-h-[min(42vh,240px)] sm:max-h-[220px] bg-black/40"
+          controls
+          playsInline
+          preload="metadata"
+        />
+      </motion.div>
+    );
+  }
+
   return (
     <motion.a
-      href={album.youtubeUrl || 'https://youtube.com'}
+      href={album.youtubeUrl || 'https://www.youtube.com'}
       target="_blank"
       rel="noopener noreferrer"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.2 }}
       whileHover={{ scale: 1.02 }}
-      className="w-full glass rounded-lg p-4 flex items-center gap-4 mt-4 hover:border-olive-light/40 transition-all group"
+      className="w-full glass rounded-lg p-3 sm:p-4 flex items-center gap-3 sm:gap-4 mt-3 sm:mt-4 hover:border-olive-light/40 transition-all group touch-manipulation min-h-[52px]"
     >
-      <div className="w-12 h-12 rounded-full bg-[#FF0000] flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+      <div className="min-h-[44px] min-w-[44px] rounded-full bg-[#FF0000] flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
         <ExternalLink className="w-5 h-5 text-white" />
       </div>
       <div>
@@ -210,15 +233,24 @@ function VideoCard({ album }: { album: Album }) {
    CATALOG PAGE
    ============================================ */
 export default function Catalog() {
-  const [albums, setAlbums] = useState<Album[]>(ALBUMS);
+  const [albums, setAlbums] = useState<Album[]>([]);
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(0);
-  const total = albums.length || 1;
+  const total = Math.max(albums.length, 1);
+  const layout = useResponsiveCarousel('catalog');
+  const touchStartX = useRef<number | null>(null);
 
   useEffect(() => {
     apiFetch<(Omit<Album, 'id'> & { _id: string })[]>('/albums')
-      .then((data) => setAlbums(data.map((item) => ({ ...item, id: item._id }))))
-      .catch(() => setAlbums(ALBUMS));
+      .then((data) => {
+        const mapped = data.map((item) => ({ ...item, id: item._id }));
+        setAlbums(mapped);
+        setCurrent(0);
+      })
+      .catch(() => {
+        setAlbums([]);
+        setCurrent(0);
+      });
   }, []);
 
   const next = useCallback(() => {
@@ -238,43 +270,68 @@ export default function Catalog() {
     return idx;
   };
 
-  const currentAlbum = albums[current] || ALBUMS[0];
+  const currentAlbum = albums[current] ?? albums[0];
+
+  if (albums.length === 0) {
+    return (
+      <main className="relative min-h-[100dvh] bg-obsidian flex items-center justify-center px-6">
+        <CrimsonVoid />
+        <p className="relative z-10 text-muted-warm text-sm text-center max-w-md">
+          No catalog releases yet.{' '}
+          <Link to="/admin/music?new=1" className="text-champagne underline underline-offset-4 hover:text-olive-light">
+            Add a release in admin
+          </Link>{' '}
+          (Catalog → music); it will show here once saved.
+        </p>
+      </main>
+    );
+  }
 
   return (
     <main className="relative min-h-[100dvh] bg-obsidian overflow-hidden">
       {/* 3D Shader Background from Home */}
       <CrimsonVoid />
 
-      <div className="relative z-10 min-h-[100dvh]">
-        {/* Header row: brand | centered title | filters */}
+      <div
+        className="relative z-10 min-h-[100dvh] touch-pan-y"
+        onTouchStart={(e) => {
+          touchStartX.current = e.touches[0].clientX;
+        }}
+        onTouchEnd={(e) => {
+          if (touchStartX.current == null) return;
+          const dx = e.changedTouches[0].clientX - touchStartX.current;
+          touchStartX.current = null;
+          if (dx < -48) next();
+          else if (dx > 48) prev();
+        }}
+      >
+        {/* Header: stack on small screens; horizontal scroll for filters */}
         <motion.div
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.2 }}
-          className="absolute top-20 left-0 right-0 z-30 flex items-start justify-between px-8"
+          className="absolute top-14 sm:top-20 left-0 right-0 z-30 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between px-4 sm:px-8 max-w-[100vw]"
         >
-          {/* Brand label */}
-          <div className="flex-shrink-0 w-[140px]">
-            <p className="text-[13px] font-body font-medium tracking-[0.15em] text-champagne/70">ARA MUZICC</p>
+          <div className="flex-shrink-0 text-center sm:text-left sm:w-[120px] md:w-[140px]">
+            <p className="text-[12px] sm:text-[13px] font-body font-medium tracking-[0.15em] text-champagne/70">ARA MUZICC</p>
             <p className="text-[9px] tracking-[0.2em] uppercase text-champagne/30 mt-0.5">Catalog</p>
           </div>
 
-          {/* Centered heading */}
-          <div className="flex-1 text-center">
-            <h1 className="font-display text-[clamp(24px,4vw,56px)] tracking-[0.1em] text-champagne leading-none">
+          <div className="flex-1 text-center min-w-0 order-first sm:order-none">
+            <h1 className="font-display text-[clamp(1.1rem,5.5vw,3.5rem)] tracking-[0.06em] sm:tracking-[0.1em] text-champagne leading-[1.05] px-1">
               ARA MUZICC CATALOG
             </h1>
-            <p className="text-[9px] tracking-[0.3em] uppercase text-muted-warm mt-1">
+            <p className="text-[8px] sm:text-[9px] tracking-[0.2em] sm:tracking-[0.3em] uppercase text-muted-warm mt-1.5 px-2">
               Albums / Singles / Instrumentals / Videos
             </p>
           </div>
 
-          {/* Filter tabs */}
-          <div className="flex-shrink-0 w-[140px] flex gap-2 justify-end">
+          <div className="w-full sm:w-auto sm:min-w-[120px] md:min-w-[140px] flex gap-1.5 sm:gap-2 justify-center sm:justify-end overflow-x-auto pb-1 -mx-1 px-1">
             {['ALL', 'ALBUMS', 'SINGLES', 'INSTRUMENTALS', 'VIDEOS'].map((cat) => (
               <button
                 key={cat}
-                className="px-3 py-1 rounded-full glass text-[9px] tracking-[0.15em] uppercase text-champagne/50 hover:text-champagne hover:border-olive-light/30 transition-all"
+                type="button"
+                className="shrink-0 px-2.5 sm:px-3 py-2 sm:py-1 rounded-full glass text-[8px] sm:text-[9px] tracking-[0.12em] sm:tracking-[0.15em] uppercase text-champagne/50 hover:text-champagne hover:border-olive-light/30 transition-all touch-manipulation"
               >
                 {cat}
               </button>
@@ -282,28 +339,32 @@ export default function Catalog() {
           </div>
         </motion.div>
 
-        {/* 3D Gallery Wall */}
-        <div className="absolute inset-0 flex items-center justify-center" style={{ perspective: '1400px' }}>
+        {/* 3D wall — dimensions follow viewport */}
+        <div
+          className="absolute inset-0 flex items-center justify-center pt-24 pb-[22rem] sm:pb-52 md:pb-44 lg:pb-36 xl:pb-28"
+          style={{ perspective: layout.centerW < 360 ? '900px' : '1400px' }}
+        >
           <div
-            className="relative flex items-center justify-center"
-            style={{ transformStyle: 'preserve-3d', width: '100%', height: '100%', marginBottom: '60px' }}
+            className="relative flex items-center justify-center max-w-[100vw]"
+            style={{ transformStyle: 'preserve-3d', width: '100%', height: '100%' }}
           >
             <AnimatePresence mode="popLayout" initial={false}>
-              {[-2, -1, 0, 1, 2].map((offset) => {
-                const album = albums[getIdx(offset)] || ALBUMS[0];
+              {layout.offsets.map((offset) => {
+                const album = albums[getIdx(offset)] ?? albums[0];
                 const absOffset = Math.abs(offset);
-                const zTranslate = offset === 0 ? 0 : -160 * absOffset;
-                const xTranslate = offset * 480;
-                const rotateY = offset * -8;
+                const zTranslate = offset === 0 ? 0 : -layout.zStep * absOffset;
+                const xTranslate = offset * layout.xStep;
+                const rotateY = offset * -layout.rotateYPer;
                 const scale = 1 - absOffset * 0.08;
                 const brightness = 1 - absOffset * 0.35;
                 const isCenter = offset === 0;
+                const frameW = isCenter ? layout.centerW : layout.sideW;
 
                 return (
                   <motion.div
                     key={`${album.id}-${offset}`}
                     initial={{
-                      x: xTranslate + direction * 380,
+                      x: xTranslate + direction * layout.animSlide,
                       z: zTranslate,
                       rotateY,
                       scale,
@@ -317,31 +378,29 @@ export default function Catalog() {
                       opacity: absOffset > 1 ? 0.1 : 1 - absOffset * 0.2,
                     }}
                     exit={{
-                      x: xTranslate - direction * 380,
+                      x: xTranslate - direction * layout.animSlide,
                       z: zTranslate,
                       rotateY,
                       scale,
                       opacity: 0,
                     }}
                     transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute"
+                    className="absolute max-w-[calc(100vw-1.5rem)]"
                     style={{
                       transformStyle: 'preserve-3d',
-                      width: isCenter ? '420px' : '340px',
+                      width: frameW,
                       filter: `brightness(${brightness})`,
                     }}
                   >
-                    {/* Spotlight above frame */}
                     <div
-                      className="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-10"
+                      className="absolute -top-8 sm:-top-10 left-1/2 -translate-x-1/2 w-16 sm:w-20 h-8 sm:h-10"
                       style={{
                         background: 'radial-gradient(ellipse at center, rgba(245,230,211,0.1) 0%, transparent 70%)',
                         boxShadow: '0 0 50px 15px rgba(245,230,211,0.03)',
                       }}
                     />
 
-                    {/* Frame */}
-                    <div className="relative p-[5px] bg-[#1a1508] rounded-sm shadow-2xl">
+                    <div className="relative p-[4px] sm:p-[5px] bg-[#1a1508] rounded-sm shadow-2xl">
                       <div className="relative overflow-hidden bg-[#1a1508] p-0.5">
                         <img
                           src={album.coverImage}
@@ -349,17 +408,24 @@ export default function Catalog() {
                           className="w-full aspect-square object-cover"
                           loading="lazy"
                         />
-                        <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 40%)' }} />
+                        <div
+                          className="absolute inset-0 pointer-events-none"
+                          style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 40%)' }}
+                        />
                       </div>
-                      <div className="absolute inset-0 pointer-events-none rounded-sm" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), inset 0 -1px 0 rgba(0,0,0,0.6)' }} />
+                      <div
+                        className="absolute inset-0 pointer-events-none rounded-sm"
+                        style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), inset 0 -1px 0 rgba(0,0,0,0.6)' }}
+                      />
                     </div>
 
-                    {/* Shadow below */}
-                    <div className="absolute -bottom-5 left-[10%] right-[10%] h-6" style={{ background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, transparent 70%)' }} />
+                    <div
+                      className="absolute -bottom-4 sm:-bottom-5 left-[10%] right-[10%] h-5 sm:h-6"
+                      style={{ background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, transparent 70%)' }}
+                    />
 
-                    {/* Audio Player or YouTube Button directly under image */}
                     {isCenter && (
-                      <div className="absolute left-0 right-0 top-full mt-3">
+                      <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 sm:mt-3 w-[min(100%,calc(100vw-1.25rem))] max-w-[520px]">
                         {album.mediaType === 'audio' ? (
                           <AudioPlayer album={album} />
                         ) : (
@@ -374,42 +440,40 @@ export default function Catalog() {
           </div>
         </div>
 
-        {/* Caption / pagination at very bottom */}
         <motion.div
           key={`caption-${current}`}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="absolute bottom-6 left-1/2 -translate-x-1/2 text-center z-30"
+          className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] sm:bottom-6 left-1/2 -translate-x-1/2 text-center z-30 px-4 w-full max-w-[90vw]"
         >
-          <p className="font-script text-lg text-olive-light text-center">{currentAlbum.genre}</p>
+          <p className="font-script text-base sm:text-lg text-olive-light text-center truncate">{currentAlbum.genre}</p>
           <p className="text-muted-warm text-[10px] mt-0.5 text-center">{currentAlbum.releaseDate}</p>
-          <p className="text-[11px] tracking-[0.15em] text-champagne/30 uppercase mt-1 text-center">
+          <p className="text-[10px] sm:text-[11px] tracking-[0.15em] text-champagne/30 uppercase mt-1 text-center">
             {current + 1} / {total}
           </p>
         </motion.div>
 
-        {/* Navigation arrows */}
         <motion.button
-          whileHover={{ scale: 1.1 }}
+          whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.95 }}
+          type="button"
           onClick={prev}
-          className="absolute left-6 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full border border-champagne/15 flex items-center justify-center text-champagne/50 hover:text-champagne hover:border-champagne/40 transition-all bg-obsidian/30 backdrop-blur-sm"
+          className="absolute left-2 sm:left-6 top-[42%] sm:top-1/2 -translate-y-1/2 z-30 min-h-[48px] min-w-[48px] sm:min-h-0 sm:min-w-0 sm:w-12 sm:h-12 rounded-full border border-champagne/15 flex items-center justify-center text-champagne/50 hover:text-champagne hover:border-champagne/40 transition-all bg-obsidian/40 backdrop-blur-sm touch-manipulation"
           aria-label="Previous"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ChevronLeft className="w-6 h-6 sm:w-5 sm:h-5" />
         </motion.button>
         <motion.button
-          whileHover={{ scale: 1.1 }}
+          whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.95 }}
+          type="button"
           onClick={next}
-          className="absolute right-6 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full border border-champagne/15 flex items-center justify-center text-champagne/50 hover:text-champagne hover:border-champagne/40 transition-all bg-obsidian/30 backdrop-blur-sm"
+          className="absolute right-2 sm:right-6 top-[42%] sm:top-1/2 -translate-y-1/2 z-30 min-h-[48px] min-w-[48px] sm:min-h-0 sm:min-w-0 sm:w-12 sm:h-12 rounded-full border border-champagne/15 flex items-center justify-center text-champagne/50 hover:text-champagne hover:border-champagne/40 transition-all bg-obsidian/40 backdrop-blur-sm touch-manipulation"
           aria-label="Next"
         >
-          <ChevronRight className="w-5 h-5" />
+          <ChevronRight className="w-6 h-6 sm:w-5 sm:h-5" />
         </motion.button>
-
-
       </div>
     </main>
   );

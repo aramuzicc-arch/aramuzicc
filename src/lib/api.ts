@@ -1,4 +1,5 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5050/api";
 const TOKEN_KEY = "admin_token";
 
 export function getToken() {
@@ -47,12 +48,37 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   return response.json();
 }
 
+export type UploadResult = {
+  url: string;
+  publicId: string;
+  resourceType: "image" | "video";
+  thumbnailUrl?: string;
+};
+
 export async function uploadImage(file: File) {
   const formData = new FormData();
   formData.append("image", file);
-  return apiFetch<{ url: string }>("/upload/image", {
+  return apiFetch<UploadResult>("/upload/image", {
     method: "POST",
     body: formData,
     auth: true,
+  });
+}
+
+export async function uploadVideo(file: File) {
+  const formData = new FormData();
+  formData.append("video", file);
+  return apiFetch<UploadResult>("/upload/video", {
+    method: "POST",
+    body: formData,
+    auth: true,
+  });
+}
+
+export async function deleteUploadedAsset(publicId: string, resourceType: "image" | "video") {
+  await apiFetch("/upload/delete-asset", {
+    method: "POST",
+    auth: true,
+    body: JSON.stringify({ publicId, resourceType }),
   });
 }

@@ -12,12 +12,18 @@ export interface Album {
   type: 'album' | 'single' | 'instrumental' | 'video';
   genre: string;
   coverImage: string;
+  coverPublicId?: string;
   releaseDate: string;
   description: string;
   mediaType: 'audio' | 'video';
   youtubeUrl?: string;
+  /** Cloudinary-delivered video for catalog (preferred over YouTube when set). */
+  cloudinaryVideoUrl?: string;
+  cloudinaryVideoPublicId?: string;
   audioUrl?: string;
   streamingLinks?: { spotify?: string; apple?: string; deezer?: string; tidal?: string; soundcloud?: string };
+  /** Shown in Home “Latest drops” when true (managed in admin catalog). */
+  isLatestDrop?: boolean;
 }
 
 export interface Track {
@@ -32,6 +38,7 @@ export interface Product {
   price: number;
   category: string;
   image: string;
+  imagePublicId?: string;
   badge?: 'new' | 'sale' | 'none';
   description: string;
 }
@@ -42,6 +49,8 @@ export interface GalleryItem {
   type: 'photo' | 'video';
   url: string;
   thumbnail: string;
+  urlPublicId?: string;
+  urlResourceType?: 'image' | 'video';
 }
 
 export interface Event {

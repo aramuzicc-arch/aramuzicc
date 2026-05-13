@@ -4,11 +4,49 @@ import { motion } from 'framer-motion';
 import { ShoppingBag, CreditCard, Truck, ArrowLeft, Check } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import CrimsonVoid from '@/components/CrimsonVoid';
+import { apiFetch } from '@/lib/api';
+import { NativeSubmitButton } from '@/components/ui/submit-button';
 
 export default function Checkout() {
   const { items, totalPrice, clearCart } = useCartStore();
   const [step, setStep] = useState<'info' | 'payment' | 'done'>('info');
   const [form, setForm] = useState({ name: '', email: '', address: '', city: '', country: '', zip: '' });
+  const [payError, setPayError] = useState('');
+  const [payLoading, setPayLoading] = useState(false);
+
+  const placeOrder = async () => {
+    setPayError('');
+    setPayLoading(true);
+    try {
+      await apiFetch('/orders', {
+        method: 'POST',
+        body: JSON.stringify({
+          customer: {
+            name: form.name,
+            email: form.email,
+            address: form.address,
+            city: form.city,
+            country: form.country,
+            zip: form.zip,
+          },
+          items: items.map((i) => ({
+            productId: i.id,
+            name: i.name,
+            price: i.price,
+            quantity: i.quantity,
+            image: i.image,
+          })),
+          total: totalPrice(),
+        }),
+      });
+      clearCart();
+      setStep('done');
+    } catch {
+      setPayError('Could not place order. Check your connection and try again.');
+    } finally {
+      setPayLoading(false);
+    }
+  };
 
   if (items.length === 0 && step !== 'done') {
     return (
@@ -95,28 +133,42 @@ export default function Checkout() {
                   PAYMENT
                 </h2>
                 <div className="space-y-5">
-                  {[
-                    { label: 'Card Number', placeholder: '4242 4242 4242 4242' },
-                    { label: 'Cardholder Name', placeholder: 'NAME ON CARD' },
-                    { label: 'Expiry Date', placeholder: 'MM / YY' },
-                    { label: 'CVC', placeholder: '123' },
-                  ].map(({ label, placeholder }) => (
-                    <div key={label}>
-                      <label className="text-[11px] tracking-[0.2em] uppercase text-muted-warm mb-2 block">{label}</label>
-                      <input type="text" placeholder={placeholder}
-                        className="w-full bg-transparent border-b border-champagne/30 pb-3 text-champagne font-body placeholder:text-muted-warm/30 focus:outline-none focus:border-olive-light transition-colors" />
-                    </div>
-                  ))}
+                  <fieldset disabled={payLoading} className="border-0 p-0 m-0 space-y-5 min-w-0 disabled:opacity-75">
+                    {[
+                      { label: 'Card Number', placeholder: '4242 4242 4242 4242' },
+                      { label: 'Cardholder Name', placeholder: 'NAME ON CARD' },
+                      { label: 'Expiry Date', placeholder: 'MM / YY' },
+                      { label: 'CVC', placeholder: '123' },
+                    ].map(({ label, placeholder }) => (
+                      <div key={label}>
+                        <label className="text-[11px] tracking-[0.2em] uppercase text-muted-warm mb-2 block">{label}</label>
+                        <input
+                          type="text"
+                          placeholder={placeholder}
+                          className="w-full bg-transparent border-b border-champagne/30 pb-3 text-champagne font-body placeholder:text-muted-warm/30 focus:outline-none focus:border-olive-light transition-colors"
+                        />
+                      </div>
+                    ))}
+                  </fieldset>
                   <div className="flex gap-3 mt-4">
-                    <button onClick={() => setStep('info')}
-                      className="flex-1 border border-champagne/30 text-champagne py-3 rounded-full text-[11px] tracking-[0.2em] uppercase font-body hover:border-olive-light transition-colors">
+                    <button
+                      type="button"
+                      onClick={() => setStep('info')}
+                      disabled={payLoading}
+                      className="flex-1 border border-champagne/30 text-champagne py-3 rounded-full text-[11px] tracking-[0.2em] uppercase font-body hover:border-olive-light transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                    >
                       Back
                     </button>
-                    <button onClick={() => { clearCart(); setStep('done'); }}
-                      className="flex-1 bg-olive text-obsidian py-3 rounded-full text-[11px] tracking-[0.2em] uppercase font-body hover:bg-olive-light transition-colors">
-                      Pay ${totalPrice().toFixed(2)}
-                    </button>
+                    <NativeSubmitButton
+                      type="button"
+                      pending={payLoading}
+                      onClick={placeOrder}
+                      className="flex-1 bg-olive text-obsidian py-3 rounded-full text-[11px] tracking-[0.2em] uppercase font-body hover:bg-olive-light transition-colors"
+                    >
+                      {`Pay $${totalPrice().toFixed(2)}`}
+                    </NativeSubmitButton>
                   </div>
+                  {payError && <p className="text-amber-700 text-sm mt-3">{payError}</p>}
                 </div>
               </motion.div>
             )}

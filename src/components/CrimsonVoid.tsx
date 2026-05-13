@@ -115,12 +115,14 @@ function ShaderPlane() {
     return () => window.removeEventListener('mousemove', onMouseMove);
   }, []);
 
-  useFrame((state) => {
-    if (meshRef.current) {
-      const mat = meshRef.current.material as THREE.ShaderMaterial;
-      mat.uniforms.u_time.value = state.clock.getElapsedTime();
-      mat.uniforms.u_mouse.value.set(mouseRef.current.x, mouseRef.current.y);
-    }
+  // Accumulate frame deltas — avoids `state.clock` (THREE.Clock is deprecated since r183).
+  const elapsedRef = useRef(0);
+  useFrame((_state, delta) => {
+    if (!meshRef.current) return;
+    elapsedRef.current += delta;
+    const mat = meshRef.current.material as THREE.ShaderMaterial;
+    mat.uniforms.u_time.value = elapsedRef.current;
+    mat.uniforms.u_mouse.value.set(mouseRef.current.x, mouseRef.current.y);
   });
 
   return (

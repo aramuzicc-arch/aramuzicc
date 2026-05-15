@@ -1,5 +1,19 @@
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5050/api";
+/** From `client/.env` → `VITE_API_BASE_URL` (see `.env.example`). */
+function resolveApiBaseUrl(): string {
+  const fromEnv = import.meta.env.VITE_API_BASE_URL?.trim().replace(/\/$/, "");
+  if (fromEnv) return fromEnv;
+  if (import.meta.env.DEV) {
+    console.warn(
+      "[api] VITE_API_BASE_URL is not set; using http://localhost:5050/api — add it to client/.env",
+    );
+    return "http://localhost:5050/api";
+  }
+  throw new Error(
+    "VITE_API_BASE_URL is required in production. Set it in Vercel → Environment Variables before building the client.",
+  );
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 const TOKEN_KEY = "admin_token";
 
 export function getToken() {

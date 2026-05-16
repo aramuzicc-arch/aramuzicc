@@ -96,7 +96,7 @@ export default function Gallery() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="absolute top-14 sm:top-20 left-1/2 -translate-x-1/2 sm:left-8 sm:translate-x-0 z-30 text-center sm:text-left px-4 max-w-[100vw]"
+          className="absolute top-20 sm:top-24 left-1/2 -translate-x-1/2 sm:left-8 sm:translate-x-0 z-30 text-center sm:text-left px-4 max-w-[100vw]"
         >
           <p className="text-[12px] sm:text-[13px] font-body font-medium tracking-[0.15em] text-champagne/70">ARA MUZICC</p>
           <p className="text-[9px] tracking-[0.2em] uppercase text-champagne/30 mt-0.5">Gallery</p>

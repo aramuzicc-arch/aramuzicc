@@ -310,7 +310,7 @@ export default function Catalog() {
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.2 }}
-          className="absolute top-14 sm:top-20 left-0 right-0 z-30 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between px-4 sm:px-8 max-w-[100vw]"
+          className="absolute top-20 sm:top-24 left-0 right-0 z-30 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between px-4 sm:px-8 max-w-[100vw]"
         >
           <div className="flex-shrink-0 text-center sm:text-left sm:w-[120px] md:w-[140px]">
             <p className="text-[12px] sm:text-[13px] font-body font-medium tracking-[0.15em] text-champagne/70">ARA MUZICC</p>
